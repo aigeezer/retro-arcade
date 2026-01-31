@@ -80,6 +80,7 @@ export class MissileCommandGame extends GameEngine {
         // Hit ground — check cities
         this.cities.forEach(c => {
           if (c.alive && Math.abs(c.x + this.cityW / 2 - m.x) < this.cityW) {
+            if (this.options?.sound) this.options.sound.play('die');
             c.alive = false;
           }
         });
@@ -101,6 +102,7 @@ export class MissileCommandGame extends GameEngine {
       const dy = m.targetY - m.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < 5) {
+        if (this.options?.sound) this.options.sound.play('hit');
         this.explosions.push({ x: m.targetX, y: m.targetY, radius: 0, maxRadius: 40, growing: true });
         return false;
       }
@@ -133,6 +135,7 @@ export class MissileCommandGame extends GameEngine {
 
     // Check wave complete
     if (this.waveMissiles >= this.maxWaveMissiles && this.enemyMissiles.length === 0 && this.explosions.length === 0) {
+      if (this.options?.sound) this.options.sound.play('clear');
       // Bonus for surviving cities
       const bonus = aliveCities.length * 100;
       this.addScore(bonus);
@@ -147,6 +150,7 @@ export class MissileCommandGame extends GameEngine {
   fire(x, y) {
     if (this.ammo <= 0) return;
     this.ammo--;
+    if (this.options?.sound) this.options.sound.play('blip');
     this.playerMissiles.push({
       x: this.batteryX,
       y: this.batteryY,

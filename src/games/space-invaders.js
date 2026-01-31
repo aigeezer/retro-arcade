@@ -86,6 +86,7 @@ export class SpaceInvadersGame extends GameEngine {
     // Invader movement
     const alive = this.invaders.filter(i => i.alive);
     if (alive.length === 0) {
+      if (this.options?.sound) this.options.sound.play('clear');
       this.level++;
       this.setupInvaders();
       return;
@@ -130,6 +131,7 @@ export class SpaceInvadersGame extends GameEngine {
           b.y = -999;
           const points = (6 - inv.type) * 10;
           this.addScore(Math.max(10, points));
+          if (this.options?.sound) this.options.sound.play('score');
         }
       });
     });
@@ -140,6 +142,7 @@ export class SpaceInvadersGame extends GameEngine {
           b.y < this.playerY + this.playerH && b.y + b.h > this.playerY) {
         b.y = 9999;
         this.lives--;
+        if (this.options?.sound) this.options.sound.play('die');
         if (this.lives <= 0) this.triggerGameOver();
       }
     });
@@ -196,6 +199,7 @@ export class SpaceInvadersGame extends GameEngine {
           h: 10
         });
         this.bulletCooldown = this.bulletRate;
+        if (this.options?.sound) this.options.sound.play('blip');
       }
     }
     else if (action === 'RELEASE') {

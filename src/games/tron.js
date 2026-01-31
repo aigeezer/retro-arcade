@@ -165,6 +165,7 @@ export class TronGame extends GameEngine {
 
       if (this.isCollision(this.playerX, this.playerY, this.playerTrail)) {
         this.playerAlive = false;
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) {
           this.triggerGameOver();
@@ -189,6 +190,7 @@ export class TronGame extends GameEngine {
 
       if (this.isCollision(this.aiX, this.aiY, this.aiTrail)) {
         this.aiAlive = false;
+        if (this.options?.sound) this.options.sound.play('score');
       }
     }
 
@@ -211,6 +213,7 @@ export class TronGame extends GameEngine {
     if (this.playerAlive && allAIDead) {
       this.roundWins++;
       this.addScore(100 * this.level);
+      if (this.options?.sound) this.options.sound.play('win');
       this.roundWon = true;
       this.roundTimer = 1.5;
     }

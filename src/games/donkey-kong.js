@@ -199,6 +199,7 @@ export class DonkeyKongGame extends GameEngine {
           Math.abs(b.x - this.playerX) < 30 &&
           this.playerVY < 0) {
         if (!b.scored) {
+          if (this.options?.sound) this.options.sound.play('score');
           this.addScore(100);
           b.scored = true;
         }
@@ -210,6 +211,7 @@ export class DonkeyKongGame extends GameEngine {
     // Reach princess
     if (Math.abs(this.playerX - this.princessX) < 30 &&
         Math.abs(this.playerY - this.princessY) < 30) {
+      if (this.options?.sound) this.options.sound.play('win');
       this.addScore(500);
       this.level++;
       this.barrels = [];
@@ -220,6 +222,7 @@ export class DonkeyKongGame extends GameEngine {
   }
 
   die() {
+    if (this.options?.sound) this.options.sound.play('die');
     this.lives--;
     if (this.lives <= 0) {
       this.triggerGameOver();
@@ -288,16 +291,16 @@ export class DonkeyKongGame extends GameEngine {
   onInput(action) {
     if (action === 'LEFT') { this.moveDir = -1; this.facingRight = false; this.climbDir = 0; }
     else if (action === 'RIGHT') { this.moveDir = 1; this.facingRight = true; this.climbDir = 0; }
-    else if (action === 'UP') { this.climbDir = 1; this.moveDir = 0; if (this.onGround && !this.isOnLadder()) { this.playerVY = this.jumpForce; } }
+    else if (action === 'UP') { this.climbDir = 1; this.moveDir = 0; if (this.onGround && !this.isOnLadder()) { this.playerVY = this.jumpForce; if (this.options?.sound) this.options.sound.play('blip'); } }
     else if (action === 'DOWN') { this.climbDir = -1; this.moveDir = 0; }
-    else if (action === 'A' && this.onGround) { this.playerVY = this.jumpForce; }
+    else if (action === 'A' && this.onGround) { this.playerVY = this.jumpForce; if (this.options?.sound) this.options.sound.play('blip'); }
     else if (action === 'RELEASE') { this.moveDir = 0; this.climbDir = 0; }
   }
 
   onTap(x, y) {
     if (y < this.playerY - 20) {
       // Tap above = jump
-      if (this.onGround) this.playerVY = this.jumpForce;
+      if (this.onGround) { this.playerVY = this.jumpForce; if (this.options?.sound) this.options.sound.play('blip'); }
       if (this.isOnLadder()) this.climbDir = 1;
     } else if (y > this.playerY + this.playerH + 20) {
       if (this.isOnLadder()) this.climbDir = -1;

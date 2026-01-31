@@ -106,6 +106,7 @@ export class QbertGame extends GameEngine {
       }
 
       // Fell off pyramid
+      if (this.options?.sound) this.options.sound.play('die');
       this.lives--;
       if (this.lives <= 0) { this.triggerGameOver(); return; }
       this.playerRow = 0;
@@ -127,6 +128,7 @@ export class QbertGame extends GameEngine {
   }
 
   landOnCube() {
+    if (this.options?.sound) this.options.sound.play('blip');
     if (this.playerRow >= 0 && this.playerRow < this.pyramidRows &&
         this.playerCol >= 0 && this.playerCol <= this.playerRow) {
       const cube = this.cubes[this.playerRow][this.playerCol];
@@ -134,12 +136,14 @@ export class QbertGame extends GameEngine {
         cube.changed = true;
         cube.color = this.targetColor;
         this.cubesChanged++;
+        if (this.options?.sound) this.options.sound.play('score');
         this.addScore(25);
       }
     }
 
     // Level complete
     if (this.cubesChanged >= this.totalCubes) {
+      if (this.options?.sound) this.options.sound.play('win');
       this.level++;
       this.buildPyramid();
       this.playerRow = 0;
@@ -252,6 +256,7 @@ export class QbertGame extends GameEngine {
       // Collision with player
       if (!e.jumping && !this.jumping &&
           e.row === this.playerRow && e.col === this.playerCol) {
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) { this.triggerGameOver(); return false; }
         this.playerRow = 0;

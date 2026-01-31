@@ -240,6 +240,7 @@ export class DigDugGame extends GameEngine {
           if (e.alive && Math.abs(e.x - (rock.x + rock.w / 2)) < this.cellSize &&
               Math.abs(e.y - (rock.y + rock.h / 2)) < this.cellSize) {
             e.alive = false;
+            if (this.options?.sound) this.options.sound.play('score');
             this.addScore(500);
           }
         });
@@ -247,6 +248,7 @@ export class DigDugGame extends GameEngine {
         // Hit player
         if (Math.abs(this.playerX - (rock.x + rock.w / 2)) < this.cellSize &&
             Math.abs(this.playerY - (rock.y + rock.h / 2)) < this.cellSize) {
+          if (this.options?.sound) this.options.sound.play('die');
           this.lives--;
           if (this.lives <= 0) this.triggerGameOver();
         }

@@ -133,10 +133,12 @@ export class FroggerGame extends GameEngine {
         const slotIndex = Math.floor((this.frogX + this.frogSize / 2) / slotWidth);
         if (slotIndex >= 0 && slotIndex < 5 && !this.slots[slotIndex]) {
           this.slots[slotIndex] = true;
+          if (this.options?.sound) this.options.sound.play('score');
           this.addScore(100 + this.frogRow * 10);
           this.resetFrog();
 
           if (this.slots.every(s => s)) {
+            if (this.options?.sound) this.options.sound.play('win');
             this.level++;
             this.slots = [false, false, false, false, false];
             this.setupLanes();
@@ -150,6 +152,7 @@ export class FroggerGame extends GameEngine {
   }
 
   die() {
+    if (this.options?.sound) this.options.sound.play('die');
     this.lives--;
     if (this.lives <= 0) {
       this.triggerGameOver();
@@ -183,6 +186,7 @@ export class FroggerGame extends GameEngine {
     this.frogTargetY = this.offsetY + this.frogRow * this.cellSize;
     this.moving = true;
     this.moveTimer = 0.1;
+    if (this.options?.sound) this.options.sound.play('move');
 
     if (dr < 0) this.addScore(10);
   }

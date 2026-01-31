@@ -159,6 +159,7 @@ export class GalagaGame extends GameEngine {
           b.y = -999;
           if (e.hp <= 0) {
             e.alive = false;
+            if (this.options?.sound) this.options.sound.play('score');
             this.addScore(e.points);
           }
         }
@@ -170,6 +171,7 @@ export class GalagaGame extends GameEngine {
       if (b.x > this.playerX && b.x < this.playerX + this.playerW &&
           b.y > this.playerY && b.y < this.playerY + this.playerH) {
         b.y = 9999;
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) this.triggerGameOver();
       }
@@ -180,6 +182,7 @@ export class GalagaGame extends GameEngine {
       if (Math.abs(e.x + 10 - (this.playerX + this.playerW / 2)) < 20 &&
           Math.abs(e.y + 8 - (this.playerY + this.playerH / 2)) < 18) {
         e.alive = false;
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) this.triggerGameOver();
       }
@@ -187,6 +190,7 @@ export class GalagaGame extends GameEngine {
 
     // Wave complete
     if (alive.length === 0) {
+      if (this.options?.sound) this.options.sound.play('clear');
       this.level++;
       this.setupWave();
     }
@@ -256,6 +260,7 @@ export class GalagaGame extends GameEngine {
 
   shoot() {
     if (this.bulletCooldown > 0) return;
+    if (this.options?.sound) this.options.sound.play('blip');
     this.bullets.push({ x: this.playerX + this.playerW / 2, y: this.playerY });
     this.bulletCooldown = 0.2;
   }

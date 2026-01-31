@@ -111,6 +111,7 @@ export class DuckHuntGame extends GameEngine {
       if (d.escapeTimer <= 0) {
         d.vy = -200;
         if (d.y < -30) {
+          if (this.options?.sound) this.options.sound.play('blip');
           this.ducksMissed++;
           this.lives--;
           if (this.lives <= 0) this.triggerGameOver();
@@ -139,6 +140,7 @@ export class DuckHuntGame extends GameEngine {
       if (!this.roundComplete) {
         this.roundComplete = true;
         this.roundTimer = 2;
+        if (this.options?.sound) this.options.sound.play('clear');
       }
       this.roundTimer -= dt;
       if (this.roundTimer <= 0) {
@@ -156,12 +158,14 @@ export class DuckHuntGame extends GameEngine {
   shoot(x, y) {
     if (this.shots <= 0) return;
     this.shots--;
+    if (this.options?.sound) this.options.sound.play('hit');
 
     let hit = false;
     this.ducks = this.ducks.filter(d => {
       if (Math.abs(d.x - x) < d.size && Math.abs(d.y - y) < d.size) {
         hit = true;
         this.ducksHit++;
+        if (this.options?.sound) this.options.sound.play('score');
         this.addScore(100 * this.level);
         this.hitEffects.push({ x: d.x, y: d.y, timer: 0.3 });
         this.fallingDucks.push({ x: d.x, y: d.y, vy: 0, size: d.size });

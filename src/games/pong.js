@@ -70,6 +70,7 @@ export class PongGame extends GameEngine {
 
     // Wall bounce (left/right)
     if (this.ballX <= 0 || this.ballX >= this.width - this.ballSize) {
+      if (this.options?.sound) this.options.sound.play('blip');
       this.ballVX = -this.ballVX;
       this.ballX = Math.max(0, Math.min(this.width - this.ballSize, this.ballX));
       if (this.options?.sound) this.options.sound.play('blip');
@@ -84,11 +85,10 @@ export class PongGame extends GameEngine {
       const hitPos = (this.ballX + this.ballSize / 2 - this.playerX) / this.paddleW;
       const angle = (hitPos - 0.5) * Math.PI / 3;
       const speed = Math.min(Math.sqrt(this.ballVX * this.ballVX + this.ballVY * this.ballVY) * 1.02, 500);
+      if (this.options?.sound) this.options.sound.play('hit');
       this.ballVX = Math.sin(angle) * speed;
-      0
-      if (this.options?.sound) this.options.sound.play('hit');
+      this.ballVY = -Math.cos(angle) * speed;
       this.ballY = this.playerY - this.ballSize;
-      if (this.options?.sound) this.options.sound.play('hit');
     }
 
     // AI paddle collision
@@ -117,6 +117,7 @@ export class PongGame extends GameEngine {
 
     // Ball out top (player scores)
     if (this.ballY < 0) {
+      if (this.options?.sound) this.options.sound.play('score');
       this.addScore(1);
       if (this.options?.sound) this.options.sound.play('score');
       if (this.score % this.pointsToLevel === 0) {

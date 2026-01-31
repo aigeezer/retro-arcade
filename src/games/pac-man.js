@@ -139,10 +139,12 @@ export class PacManGame extends GameEngine {
       const tile = this.maze[pCell.r][pCell.c];
       if (tile === 2) {
         this.maze[pCell.r][pCell.c] = 0;
+        if (this.options?.sound) this.options.sound.play('click');
         this.addScore(10);
         this.dotsEaten++;
       } else if (tile === 3) {
         this.maze[pCell.r][pCell.c] = 0;
+        if (this.options?.sound) this.options.sound.play('powerup');
         this.addScore(50);
         this.dotsEaten++;
         this.powerMode = true;
@@ -158,6 +160,7 @@ export class PacManGame extends GameEngine {
 
     // Level complete
     if (this.dotsEaten >= this.totalDots) {
+      if (this.options?.sound) this.options.sound.play('win');
       this.level++;
       this.buildMaze();
       this.spawnGhosts();
@@ -197,8 +200,10 @@ export class PacManGame extends GameEngine {
           // Eat ghost
           g.x = Math.floor(this.cols / 2) * this.cellSize + this.offsetX;
           g.y = 3 * this.cellSize + this.offsetY;
+          if (this.options?.sound) this.options.sound.play('score');
           this.addScore(200);
         } else {
+          if (this.options?.sound) this.options.sound.play('die');
           this.lives--;
           if (this.lives <= 0) {
             this.triggerGameOver();

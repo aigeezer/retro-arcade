@@ -38,8 +38,7 @@ export class PongGame extends GameEngine {
     const angle = (Math.random() * Math.PI / 3) - Math.PI / 6;
     const speed = 200 + (this.level - 1) * 30;
     this.ballVX = Math.sin(angle) * speed;
-    0
-      if (this.options?.sound) this.options.sound.play('hit');
+    this.ballVY = -Math.cos(angle) * speed;
   }
 
   update(dt) {
@@ -73,7 +72,6 @@ export class PongGame extends GameEngine {
       if (this.options?.sound) this.options.sound.play('blip');
       this.ballVX = -this.ballVX;
       this.ballX = Math.max(0, Math.min(this.width - this.ballSize, this.ballX));
-      if (this.options?.sound) this.options.sound.play('blip');
     }
 
     // Player paddle collision
@@ -119,7 +117,6 @@ export class PongGame extends GameEngine {
     if (this.ballY < 0) {
       if (this.options?.sound) this.options.sound.play('score');
       this.addScore(1);
-      if (this.options?.sound) this.options.sound.play('score');
       if (this.score % this.pointsToLevel === 0) {
         this.level++;
       }

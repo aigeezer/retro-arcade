@@ -301,10 +301,10 @@ export class TronGame extends GameEngine {
   }
 
   onInput(action) {
-    if (action === 'LEFT' && this.playerDir.x === 0) this.playerDir = { x: -1, y: 0 };
-    else if (action === 'RIGHT' && this.playerDir.x === 0) this.playerDir = { x: 1, y: 0 };
-    else if (action === 'UP' && this.playerDir.y === 0) this.playerDir = { x: 0, y: -1 };
-    else if (action === 'DOWN' && this.playerDir.y === 0) this.playerDir = { x: 0, y: 1 };
+    if (action === 'LEFT' && this.playerDir.x === 0) { this.playerDir = { x: -1, y: 0 }; if (this.options?.sound) this.options.sound.play('move'); }
+    else if (action === 'RIGHT' && this.playerDir.x === 0) { this.playerDir = { x: 1, y: 0 }; if (this.options?.sound) this.options.sound.play('move'); }
+    else if (action === 'UP' && this.playerDir.y === 0) { this.playerDir = { x: 0, y: -1 }; if (this.options?.sound) this.options.sound.play('move'); }
+    else if (action === 'DOWN' && this.playerDir.y === 0) { this.playerDir = { x: 0, y: 1 }; if (this.options?.sound) this.options.sound.play('move'); }
     else if (action === 'A') this.boosting = true;
     else if (action === 'B') this.boosting = false;
   }

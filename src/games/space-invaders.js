@@ -129,9 +129,9 @@ export class SpaceInvadersGame extends GameEngine {
             b.y < inv.y + this.invaderH && b.y + b.h > inv.y) {
           inv.alive = false;
           b.y = -999;
+          if (this.options?.sound) this.options.sound.play('score');
           const points = (6 - inv.type) * 10;
           this.addScore(Math.max(10, points));
-          if (this.options?.sound) this.options.sound.play('score');
         }
       });
     });
@@ -141,6 +141,7 @@ export class SpaceInvadersGame extends GameEngine {
       if (b.x < this.playerX + this.playerW && b.x + b.w > this.playerX &&
           b.y < this.playerY + this.playerH && b.y + b.h > this.playerY) {
         b.y = 9999;
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.options?.sound) this.options.sound.play('die');
         if (this.lives <= 0) this.triggerGameOver();
@@ -192,6 +193,7 @@ export class SpaceInvadersGame extends GameEngine {
     else if (action === 'RIGHT') this.moveDir = 1;
     else if (action === 'A' || action === 'UP') {
       if (this.bulletCooldown <= 0) {
+        if (this.options?.sound) this.options.sound.play('blip');
         this.bullets.push({
           x: this.playerX + this.playerW / 2 - 2,
           y: this.playerY,
@@ -199,7 +201,6 @@ export class SpaceInvadersGame extends GameEngine {
           h: 10
         });
         this.bulletCooldown = this.bulletRate;
-        if (this.options?.sound) this.options.sound.play('blip');
       }
     }
     else if (action === 'RELEASE') {

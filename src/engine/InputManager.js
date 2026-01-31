@@ -111,26 +111,36 @@ export class InputManager {
   }
 
   /**
-   * Bind tap on canvas (for games like Minesweeper, Whack-a-Mole)
+   * Bind tap/touch on canvas (for games like Minesweeper, Whack-a-Mole, and paddle games)
    */
   bindTap(canvas, callback) {
-    canvas.addEventListener('click', (e) => {
+    const getCoords = (clientX, clientY) => {
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
       const scaleY = canvas.height / rect.height;
-      const x = (e.clientX - rect.left) * scaleX;
-      const y = (e.clientY - rect.top) * scaleY;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    };
+
+    canvas.addEventListener('click', (e) => {
+      const { x, y } = getCoords(e.clientX, e.clientY);
       callback(x, y);
     });
 
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
       const touch = e.touches[0];
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const x = (touch.clientX - rect.left) * scaleX;
-      const y = (touch.clientY - rect.top) * scaleY;
+      const { x, y } = getCoords(touch.clientX, touch.clientY);
+      callback(x, y);
+    }, { passive: false });
+
+    // Continuous touch tracking for paddle/movement games
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const { x, y } = getCoords(touch.clientX, touch.clientY);
       callback(x, y);
     }, { passive: false });
   }

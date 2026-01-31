@@ -4,7 +4,7 @@ import { TetrisGame } from './tetris.js';
 import { BreakoutGame } from './breakout.js';
 import { PongGame } from './pong.js';
 import { SpaceInvadersGame } from './space-invaders.js';
-import { PacmanGame } from './pacman.js';
+import { PacManGame } from './pac-man.js';
 import { AsteroidsGame } from './asteroids.js';
 import { FroggerGame } from './frogger.js';
 import { FlappyBirdGame } from './flappy-bird.js';
@@ -80,7 +80,7 @@ export const gameRegistry = [
     id: 'pacman',
     name: 'Pac-Man',
     icon: '🟡',
-    Game: PacmanGame,
+    Game: PacManGame,
     controls: 'dpad',
     width: 400,
     height: 400,

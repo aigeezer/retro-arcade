@@ -68,17 +68,8 @@ export class SpaceInvadersGame extends GameEngine {
     }
     this.playerX = Math.max(0, Math.min(this.width - this.playerW, this.playerX));
 
-    // Auto-fire cooldown
-    this.bulletCooldown -= dt;
-    if (this.bulletCooldown <= 0) {
-      this.bullets.push({
-        x: this.playerX + this.playerW / 2 - 2,
-        y: this.playerY,
-        w: 4,
-        h: 10
-      });
-      this.bulletCooldown = this.bulletRate;
-    }
+    // Fire cooldown
+    if (this.bulletCooldown > 0) this.bulletCooldown -= dt;
 
     // Update player bullets
     this.bullets = this.bullets.filter(b => {
@@ -196,13 +187,16 @@ export class SpaceInvadersGame extends GameEngine {
   onInput(action) {
     if (action === 'LEFT') this.moveDir = -1;
     else if (action === 'RIGHT') this.moveDir = 1;
-    else if (action === 'A') {
-      this.bullets.push({
-        x: this.playerX + this.playerW / 2 - 2,
-        y: this.playerY,
-        w: 4,
-        h: 10
-      });
+    else if (action === 'A' || action === 'UP') {
+      if (this.bulletCooldown <= 0) {
+        this.bullets.push({
+          x: this.playerX + this.playerW / 2 - 2,
+          y: this.playerY,
+          w: 4,
+          h: 10
+        });
+        this.bulletCooldown = this.bulletRate;
+      }
     }
     else if (action === 'RELEASE') {
       this.moveDir = 0;

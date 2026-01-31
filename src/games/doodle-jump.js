@@ -8,6 +8,7 @@ export class DoodleJumpGame extends GameEngine {
     this.doodleY = this.height / 2;
     this.doodleVX = 0;
     this.doodleVY = 0;
+    this.moveDir = 0;
     this.gravity = 800;
     this.jumpPower = -400;
     this.moveSpeed = 200;
@@ -29,9 +30,22 @@ export class DoodleJumpGame extends GameEngine {
     this.maxHeight = 0;
   }
 
+  onInput(action) {
+    if (action === 'LEFT') this.moveDir = -1;
+    else if (action === 'RIGHT') this.moveDir = 1;
+    else if (action === 'RELEASE') this.moveDir = 0;
+  }
+
+  onTap(x) {
+    // Tap left/right half of screen to move
+    this.moveDir = x < this.width / 2 ? -1 : 1;
+  }
+
   update(dt) {
-    // Horizontal movement
-    if (this.options?.input?.isDown('LEFT')) {
+    // Horizontal movement — use event-driven moveDir OR polling (whichever is active)
+    if (this.moveDir !== 0) {
+      this.doodleVX = this.moveDir * this.moveSpeed;
+    } else if (this.options?.input?.isDown('LEFT')) {
       this.doodleVX = -this.moveSpeed;
     } else if (this.options?.input?.isDown('RIGHT')) {
       this.doodleVX = this.moveSpeed;

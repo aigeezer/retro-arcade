@@ -387,7 +387,7 @@ export class QbertGame extends GameEngine {
   onInput(action) {
     // Q*bert moves diagonally on the isometric grid
     if (action === 'UP') this.tryJump(-1, 0);        // up-left
-    else if (action === 'RIGHT') this.tryJump(-1, 0); // up-right (same as going up a row, keeping col)
+    else if (action === 'RIGHT') this.tryJump(-1, 1); // up-right
     else if (action === 'DOWN') this.tryJump(1, 1);   // down-right
     else if (action === 'LEFT') this.tryJump(1, 0);   // down-left
     else if (action === 'A') this.tryJump(-1, -1);     // up-left diagonal

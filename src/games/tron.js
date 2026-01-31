@@ -177,7 +177,10 @@ export class TronGame extends GameEngine {
 
     // Move main AI
     if (this.aiAlive) {
-      this.aiThink({ x: this.aiX, y: this.aiY, dir: this.aiDir, turnTimer: this.aiTurnTimer }, this.aiTrail);
+      const aiState = { x: this.aiX, y: this.aiY, dir: this.aiDir, turnTimer: this.aiTurnTimer };
+      this.aiThink(aiState, this.aiTrail);
+      this.aiDir = aiState.dir;
+      this.aiTurnTimer = aiState.turnTimer;
       this.aiX += this.aiDir.x * this.speed * dt;
       this.aiY += this.aiDir.y * this.speed * dt;
       this.aiX = Math.round(this.aiX / this.gridSize) * this.gridSize;

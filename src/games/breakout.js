@@ -14,6 +14,8 @@ export class BreakoutGame extends GameEngine {
     this.ballVX = 200;
     this.ballVY = -200;
     this.ballLaunched = false;
+    this.targetX = null;
+    this.lives = 3;
 
     this.brickRows = 5;
     this.brickCols = 8;
@@ -37,18 +39,32 @@ export class BreakoutGame extends GameEngine {
   }
 
   onInput(action) {
-    if (action === 'A' && !this.ballLaunched) {
+    if ((action === 'A' || action === 'UP') && !this.ballLaunched) {
       this.ballLaunched = true;
       if (this.options?.sound) this.options.sound.play('blip');
     }
   }
 
-  update(dt) {
-    // Paddle movement
-    if (this.options?.input?.isDown('LEFT')) {
-      this.paddleX -= this.paddleSpeed * dt;
+  onTap(x, y) {
+    if (!this.ballLaunched) {
+      this.ballLaunched = true;
+      if (this.options?.sound) this.options.sound.play('blip');
     }
-    if (this.options?.input?.isDown('RIGHT')) {
+    // Move paddle toward tap position
+    this.targetX = x;
+  }
+
+  update(dt) {
+    // Paddle movement — tap/touch target or keyboard
+    if (this.targetX !== null) {
+      const center = this.paddleX + this.paddleW / 2;
+      const diff = this.targetX - center;
+      if (Math.abs(diff) > 5) {
+        this.paddleX += Math.sign(diff) * this.paddleSpeed * dt * 1.5;
+      }
+    } else if (this.options?.input?.isDown('LEFT')) {
+      this.paddleX -= this.paddleSpeed * dt;
+    } else if (this.options?.input?.isDown('RIGHT')) {
       this.paddleX += this.paddleSpeed * dt;
     }
     this.paddleX = Math.max(0, Math.min(this.width - this.paddleW, this.paddleX));
@@ -82,6 +98,9 @@ export class BreakoutGame extends GameEngine {
       this.ballVY = -Math.abs(this.ballVY);
       const hitPos = (this.ballX - this.paddleX) / this.paddleW - 0.5;
       this.ballVX += hitPos * 200;
+      // Cap ball speed
+      const maxSpeed = 500;
+      this.ballVX = Math.max(-maxSpeed, Math.min(maxSpeed, this.ballVX));
       if (this.options?.sound) this.options.sound.play('hit');
     }
 
@@ -108,9 +127,20 @@ export class BreakoutGame extends GameEngine {
       this.triggerGameOver();
     }
 
-    // Lose condition
+    // Lose condition — ball out of play
     if (this.ballY > this.height) {
-      this.triggerGameOver();
+      this.lives--;
+      if (this.lives <= 0) {
+        this.triggerGameOver();
+      } else {
+        // Reset ball position
+        this.ballLaunched = false;
+        this.ballX = this.paddleX + this.paddleW / 2;
+        this.ballY = this.paddleY - 20;
+        this.ballVX = 200;
+        this.ballVY = -200;
+        this.targetX = null;
+      }
     }
   }
 
@@ -131,8 +161,13 @@ export class BreakoutGame extends GameEngine {
     ctx.fillStyle = '#ff00ff';
     ctx.fillRect(this.ballX, this.ballY, this.ballSize, this.ballSize);
 
+    // Lives
+    for (let i = 0; i < this.lives; i++) {
+      this.drawPixelRect(ctx, 10 + i * 15, this.height - 15, 8, 8, '#00ff41');
+    }
+
     if (!this.ballLaunched) {
-      this.drawText(ctx, 'PRESS A TO LAUNCH', this.width / 2, this.height - 80, 8, '#ffe600');
+      this.drawText(ctx, 'TAP OR PRESS SPACE', this.width / 2, this.height - 80, 8, '#ffe600');
     }
 
     if (this.gameOver) {

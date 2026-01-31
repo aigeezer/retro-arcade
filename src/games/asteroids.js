@@ -126,6 +126,7 @@ export class AsteroidsGame extends GameEngine {
         const b = this.bullets[i];
         if (Math.hypot(b.x - a.x, b.y - a.y) < a.radius) {
           this.bullets.splice(i, 1);
+          if (this.options?.sound) this.options.sound.play('hit');
           this.addScore(a.size === 3 ? 20 : a.size === 2 ? 50 : 100);
           if (a.size > 1) {
             newAsteroids.push({ x: a.x, y: a.y, size: a.size - 1 });
@@ -143,6 +144,7 @@ export class AsteroidsGame extends GameEngine {
     if (this.invincible <= 0) {
       for (const a of this.asteroids) {
         if (Math.hypot(a.x - this.shipX, a.y - this.shipY) < a.radius + this.shipSize) {
+          if (this.options?.sound) this.options.sound.play('die');
           this.lives--;
           if (this.lives <= 0) {
             this.triggerGameOver();
@@ -251,6 +253,7 @@ export class AsteroidsGame extends GameEngine {
 
   shoot() {
     if (this.bulletCooldown > 0) return;
+    if (this.options?.sound) this.options.sound.play('blip');
     this.bullets.push({
       x: this.shipX + Math.cos(this.shipAngle) * this.shipSize,
       y: this.shipY + Math.sin(this.shipAngle) * this.shipSize,

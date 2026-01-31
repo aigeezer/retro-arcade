@@ -63,38 +63,76 @@ export class TetrisGame extends GameEngine {
     if (action === 'LEFT') {
       if (!this.collides(this.piece, this.pieceX - 1, this.pieceY)) {
         this.pieceX--;
+        this.lockDelay = 0; // Reset lock on movement
         if (this.options?.sound) this.options.sound.play('move');
       }
     } else if (action === 'RIGHT') {
       if (!this.collides(this.piece, this.pieceX + 1, this.pieceY)) {
         this.pieceX++;
+        this.lockDelay = 0; // Reset lock on movement
         if (this.options?.sound) this.options.sound.play('move');
       }
     } else if (action === 'DOWN') {
-      this.fallTimer = this.fallInterval; // Trigger immediate fall
+      // Soft drop — move down one row immediately, award 1 point
+      if (!this.collides(this.piece, this.pieceX, this.pieceY + 1)) {
+        this.pieceY++;
+        this.addScore(1);
+        this.fallTimer = 0; // Reset fall timer after manual drop
+      }
+    } else if (action === 'B') {
+      // Hard drop — slam to bottom instantly
+      let dropped = 0;
+      while (!this.collides(this.piece, this.pieceX, this.pieceY + 1)) {
+        this.pieceY++;
+        dropped++;
+      }
+      if (dropped > 0) {
+        this.addScore(dropped * 2);
+        if (this.options?.sound) this.options.sound.play('drop');
+      }
+      this.lockPiece();
     } else if (action === 'UP' || action === 'A') {
       const rotated = this.rotate(this.piece);
+      // Wall kick: try normal, then left, then right
       if (!this.collides(rotated, this.pieceX, this.pieceY)) {
         this.piece = rotated;
+        this.lockDelay = 0;
+        if (this.options?.sound) this.options.sound.play('blip');
+      } else if (!this.collides(rotated, this.pieceX - 1, this.pieceY)) {
+        this.piece = rotated;
+        this.pieceX--;
+        this.lockDelay = 0;
+        if (this.options?.sound) this.options.sound.play('blip');
+      } else if (!this.collides(rotated, this.pieceX + 1, this.pieceY)) {
+        this.piece = rotated;
+        this.pieceX++;
+        this.lockDelay = 0;
         if (this.options?.sound) this.options.sound.play('blip');
       }
     }
   }
 
   update(dt) {
+    // Track if piece is resting on something (can't move down)
+    const isResting = this.collides(this.piece, this.pieceX, this.pieceY + 1);
+
+    if (isResting) {
+      // Piece is on the ground or on other blocks — accumulate lock delay every frame
+      this.lockDelay += dt;
+      if (this.lockDelay >= 0.4) {
+        this.lockPiece();
+        return;
+      }
+    } else {
+      this.lockDelay = 0;
+    }
+
+    // Gravity — move piece down at fall interval
     this.fallTimer += dt;
-
     if (this.fallTimer >= this.fallInterval) {
-      this.fallTimer = 0;
-
-      if (!this.collides(this.piece, this.pieceX, this.pieceY + 1)) {
+      this.fallTimer -= this.fallInterval;
+      if (!isResting) {
         this.pieceY++;
-        this.lockDelay = 0;
-      } else {
-        this.lockDelay += dt;
-        if (this.lockDelay > 0.3) {
-          this.lockPiece();
-        }
       }
     }
   }

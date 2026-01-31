@@ -99,6 +99,7 @@ export class DefenderGame extends GameEngine {
     // Auto fire
     this.bulletCooldown -= dt;
     if (this.autoFire && this.bulletCooldown <= 0) {
+      if (this.options?.sound) this.options.sound.play('blip');
       const dir = this.facingRight ? 1 : -1;
       this.bullets.push({
         x: this.shipX + dir * this.shipW / 2,
@@ -191,7 +192,6 @@ export class DefenderGame extends GameEngine {
       // Enemy-player collision
       if (Math.abs(this.wrapX(enemy.x) - this.shipX) < 18 &&
           Math.abs(enemy.y - this.shipY) < 14) {
-        this.addScore(150);
         if (enemy.captureTarget && enemy.captureTarget.captured) {
           enemy.captureTarget.captured = false;
           enemy.captureTarget.falling = true;
@@ -207,6 +207,7 @@ export class DefenderGame extends GameEngine {
         if (Math.abs(this.wrapX(b.x) - this.wrapX(enemy.x)) < 14 &&
             Math.abs(b.y - enemy.y) < 12) {
           this.bullets.splice(i, 1);
+          if (this.options?.sound) this.options.sound.play('score');
           this.addScore(enemy.type === 'lander' ? 150 : 200);
           if (enemy.captureTarget && enemy.captureTarget.captured) {
             enemy.captureTarget.captured = false;
@@ -231,6 +232,7 @@ export class DefenderGame extends GameEngine {
         if (Math.abs(this.wrapX(h.x) - this.shipX) < 20 &&
             Math.abs(h.y - this.shipY) < 20) {
           h.falling = false;
+          if (this.options?.sound) this.options.sound.play('powerup');
           this.addScore(500);
         }
         if (h.y > this.height - 45) {
@@ -248,6 +250,7 @@ export class DefenderGame extends GameEngine {
   }
 
   die() {
+    if (this.options?.sound) this.options.sound.play('die');
     this.lives--;
     if (this.lives <= 0) {
       this.triggerGameOver();

@@ -173,6 +173,12 @@ function launchGame(gameDef, index) {
       } else {
         game.onInput(action);
       }
+    } else {
+      // Send release events — games like Pong need to know when to stop moving
+      if (game.onInput) {
+        game.onInput('RELEASE_' + action);
+        game.onInput('RELEASE');
+      }
     }
   });
 
@@ -186,8 +192,8 @@ function launchGame(gameDef, index) {
     });
   }
 
-  // Tap support for tap-based games
-  if (gameDef.controls === 'tap' || gameDef.controls === 'custom') {
+  // Tap support — bind tap for any game that has onTap, plus tap-based games
+  if (gameDef.controls === 'tap' || gameDef.controls === 'custom' || game.onTap) {
     input.bindTap(canvas, (x, y) => {
       if (game.onTap) game.onTap(x, y);
     });

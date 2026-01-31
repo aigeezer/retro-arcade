@@ -5,12 +5,13 @@ export class SnakeGame extends GameEngine {
     this.gridSize = 20;
     this.cellSize = this.width / this.gridSize;
     this.snake = [{ x: 10, y: 10 }];
-    this.direction = { x: 1, y: 0 };
-    this.nextDirection = { x: 1, y: 0 };
+    this.direction = { x: 0, y: 0 };
+    this.nextDirection = { x: 0, y: 0 };
     this.food = this.spawnFood();
     this.moveTimer = 0;
     this.moveInterval = 0.15;
     this.growing = false;
+    this.started = false;
   }
 
   spawnFood() {
@@ -33,12 +34,19 @@ export class SnakeGame extends GameEngine {
       RIGHT: { x: 1, y: 0 },
     };
     const newDir = dirs[action];
-    if (newDir && (newDir.x !== -this.direction.x || newDir.y !== -this.direction.y)) {
-      this.nextDirection = newDir;
+    if (newDir) {
+      if (!this.started) {
+        this.started = true;
+        this.direction = newDir;
+        this.nextDirection = newDir;
+      } else if (newDir.x !== -this.direction.x || newDir.y !== -this.direction.y) {
+        this.nextDirection = newDir;
+      }
     }
   }
 
   update(dt) {
+    if (!this.started) return;
     this.moveTimer += dt;
     if (this.moveTimer >= this.moveInterval) {
       this.moveTimer = 0;
@@ -65,14 +73,12 @@ export class SnakeGame extends GameEngine {
       if (newHead.x === this.food.x && newHead.y === this.food.y) {
         this.addScore(10);
         this.food = this.spawnFood();
-        this.growing = true;
         if (this.options?.sound) this.options.sound.play('score');
         // Speed up
         if (this.moveInterval > 0.08) this.moveInterval -= 0.005;
-      } else if (!this.growing) {
-        this.snake.pop();
+        // Don't pop tail — snake grows by 1
       } else {
-        this.growing = false;
+        this.snake.pop();
       }
     }
   }
@@ -103,6 +109,11 @@ export class SnakeGame extends GameEngine {
     // Food
     this.drawPixelRect(ctx, this.food.x * this.cellSize + 2, this.food.y * this.cellSize + 2,
       this.cellSize - 4, this.cellSize - 4, '#ff0040', '#ff00ff');
+
+    if (!this.started) {
+      this.drawText(ctx, 'SWIPE OR PRESS', this.width / 2, this.height / 2 - 15, 10, '#00fff2');
+      this.drawText(ctx, 'ARROW TO START', this.width / 2, this.height / 2 + 15, 10, '#00fff2');
+    }
 
     if (this.gameOver) {
       this.drawText(ctx, 'GAME OVER', this.width / 2, this.height / 2, 20, '#ff0040');

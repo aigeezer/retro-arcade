@@ -66,13 +66,14 @@ export class CrossyRoadGame extends GameEngine {
 
     if (newX < 0 || newX >= this.gridSize) return;
 
+    const oldY = this.playerY;
     this.playerX = newX;
     this.playerY = newY;
 
     if (this.options?.sound) this.options.sound.play('move');
 
     // Progress tracking
-    if (newY < this.playerY) {
+    if (newY < oldY) {
       const progress = this.gridSize - this.playerY;
       if (progress > this.maxProgress) {
         this.addScore((progress - this.maxProgress) * 10);

@@ -101,6 +101,7 @@ export class BombermanGame extends GameEngine {
     const pos = this.getGridPos(this.playerX + this.playerSize / 2, this.playerY + this.playerSize / 2);
     // Don't stack bombs
     if (this.bombs.some(b => b.col === pos.c && b.row === pos.r)) return;
+    if (this.options?.sound) this.options.sound.play('drop');
     this.bombs.push({
       col: pos.c,
       row: pos.r,
@@ -110,6 +111,7 @@ export class BombermanGame extends GameEngine {
   }
 
   explode(bomb) {
+    if (this.options?.sound) this.options.sound.play('hit');
     const dirs = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]];
     dirs.forEach(([dc, dr]) => {
       for (let i = 0; i <= (dc === 0 && dr === 0 ? 0 : bomb.range); i++) {
@@ -142,6 +144,12 @@ export class BombermanGame extends GameEngine {
   }
 
   update(dt) {
+    // Invincibility timer
+    if (this.invincible) {
+      this.invincibleTimer -= dt;
+      if (this.invincibleTimer <= 0) this.invincible = false;
+    }
+
     // Player movement (grid-aligned)
     const newX = this.playerX + this.moveDir.x * this.playerSpeed * dt;
     const newY = this.playerY + this.moveDir.y * this.playerSpeed * dt;
@@ -168,6 +176,7 @@ export class BombermanGame extends GameEngine {
     const pp = this.getGridPos(this.playerX + this.playerSize / 2, this.playerY + this.playerSize / 2);
     if (pp.r >= 0 && pp.r < this.rows && pp.c >= 0 && pp.c < this.cols && this.grid[pp.r][pp.c] === 3) {
       this.grid[pp.r][pp.c] = 0;
+      if (this.options?.sound) this.options.sound.play('powerup');
       if (Math.random() < 0.5) {
         this.maxBombs++;
       } else {
@@ -192,12 +201,15 @@ export class BombermanGame extends GameEngine {
 
       // Check player hit
       const pPos = this.getGridPos(this.playerX + this.playerSize / 2, this.playerY + this.playerSize / 2);
-      if (pPos.c === e.col && pPos.r === e.row) {
+      if (pPos.c === e.col && pPos.r === e.row && !this.invincible) {
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) this.triggerGameOver();
         else {
           this.playerX = this.cellSize + 2;
           this.playerY = this.offsetY + this.cellSize + 2;
+          this.invincible = true;
+          this.invincibleTimer = 1.5;
         }
       }
 
@@ -205,6 +217,7 @@ export class BombermanGame extends GameEngine {
       this.enemies = this.enemies.filter(en => {
         const ePos = this.getGridPos(en.x + en.size / 2, en.y + en.size / 2);
         if (ePos.c === e.col && ePos.r === e.row) {
+          if (this.options?.sound) this.options.sound.play('score');
           this.addScore(100);
           return false;
         }
@@ -234,6 +247,7 @@ export class BombermanGame extends GameEngine {
       // Enemy-player collision
       if (Math.abs(en.x - this.playerX) < this.cellSize * 0.7 &&
           Math.abs(en.y - this.playerY) < this.cellSize * 0.7) {
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) this.triggerGameOver();
         else {

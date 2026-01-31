@@ -17,6 +17,7 @@ export class GameEngine {
     this.animFrameId = null;
     this.onScoreChange = options.onScoreChange || (() => {});
     this.onGameOver = options.onGameOver || (() => {});
+    this.options = options;
     
     // Load high score
     this.gameId = options.gameId || 'unknown';

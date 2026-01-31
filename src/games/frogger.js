@@ -113,6 +113,7 @@ export class FroggerGame extends GameEngine {
             onLog = true;
             this.frogX += log.speed * dt;
             this.frogTargetX = this.frogX;
+            this.frogCol = Math.floor(this.frogX / this.cellSize);
           }
         }
         if (!onLog) {

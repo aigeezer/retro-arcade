@@ -140,6 +140,7 @@ export class DigDugGame extends GameEngine {
         this.pumpTarget.inflateLevel += dt * 2;
         if (this.pumpTarget.inflateLevel >= 4) {
           this.pumpTarget.alive = false;
+          if (this.options?.sound) this.options.sound.play('score');
           const depth = this.getGridPos(this.pumpTarget.x, this.pumpTarget.y).r;
           this.addScore((depth + 1) * 100);
           this.pumping = false;
@@ -211,6 +212,7 @@ export class DigDugGame extends GameEngine {
       // Enemy-player collision
       if (Math.abs(e.x - this.playerX) < this.cellSize * 0.8 &&
           Math.abs(e.y - this.playerY) < this.cellSize * 0.8) {
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) this.triggerGameOver();
         else {
@@ -225,6 +227,7 @@ export class DigDugGame extends GameEngine {
       if (rock.settled) return;
       const below = this.getGridPos(rock.x + rock.w / 2, rock.y + rock.h + 2);
       if (below.r < this.rows && this.grid[below.r] && this.grid[below.r][below.c] === 0) {
+        if (!rock.falling && this.options?.sound) this.options.sound.play('drop');
         rock.falling = true;
       }
 
@@ -372,7 +375,7 @@ export class DigDugGame extends GameEngine {
     else if (action === 'RIGHT') { this.moveDir = { x: 1, y: 0 }; this.pumping = false; this.pumpTarget = null; }
     else if (action === 'UP') { this.moveDir = { x: 0, y: -1 }; this.pumping = false; this.pumpTarget = null; }
     else if (action === 'DOWN') { this.moveDir = { x: 0, y: 1 }; this.pumping = false; this.pumpTarget = null; }
-    else if (action === 'A') { this.pumping = true; this.moveDir = { x: 0, y: 0 }; this.pumpExtend = 0; }
+    else if (action === 'A') { this.pumping = true; this.moveDir = { x: 0, y: 0 }; this.pumpExtend = 0; if (this.options?.sound) this.options.sound.play('blip'); }
     else if (action === 'RELEASE') { this.moveDir = { x: 0, y: 0 }; this.pumping = false; this.pumpTarget = null; }
   }
 

@@ -84,6 +84,7 @@ export class CentipedeGame extends GameEngine {
     // Auto-shoot
     this.bulletCooldown -= dt;
     if (this.autoShoot && this.bulletCooldown <= 0) {
+      if (this.options?.sound) this.options.sound.play('blip');
       this.bullets.push({ x: this.playerX + this.playerW / 2 - 2, y: this.playerY, w: 4, h: 8 });
       this.bulletCooldown = 0.12;
     }
@@ -103,6 +104,7 @@ export class CentipedeGame extends GameEngine {
         this.mushrooms[key].health--;
         if (this.mushrooms[key].health <= 0) {
           delete this.mushrooms[key];
+          if (this.options?.sound) this.options.sound.play('click');
           this.addScore(1);
         }
         b.y = -999;
@@ -146,6 +148,7 @@ export class CentipedeGame extends GameEngine {
         if (b.x < seg.x + this.gridSize && b.x + b.w > seg.x &&
             b.y < seg.y + this.gridSize && b.y + b.h > seg.y) {
           this.bullets.splice(i, 1);
+          if (this.options?.sound) this.options.sound.play('hit');
           // Drop mushroom where segment died
           const mc = Math.floor(seg.x / this.gridSize);
           const mr = Math.floor(seg.y / this.gridSize);
@@ -161,6 +164,7 @@ export class CentipedeGame extends GameEngine {
     for (const seg of this.segments) {
       if (Math.abs(seg.x - this.playerX) < this.gridSize &&
           Math.abs(seg.y - this.playerY) < this.gridSize) {
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) { this.triggerGameOver(); return; }
         this.playerX = this.width / 2;
@@ -199,6 +203,7 @@ export class CentipedeGame extends GameEngine {
       // Spider-player collision
       if (Math.abs(this.spider.x - this.playerX) < 15 &&
           Math.abs(this.spider.y - this.playerY) < 15) {
+        if (this.options?.sound) this.options.sound.play('die');
         this.lives--;
         if (this.lives <= 0) { this.triggerGameOver(); return; }
         this.spider = null;
@@ -210,6 +215,7 @@ export class CentipedeGame extends GameEngine {
         const b = this.bullets[i];
         if (this.spider && Math.abs(b.x - this.spider.x) < 12 && Math.abs(b.y - this.spider.y) < 12) {
           this.bullets.splice(i, 1);
+          if (this.options?.sound) this.options.sound.play('score');
           this.addScore(600);
           this.spider = null;
           this.spiderTimer = 5;

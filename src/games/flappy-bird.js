@@ -17,9 +17,21 @@ export class FlappyBirdGame extends GameEngine {
     this.pipeInterval = 2.0;
 
     this.started = false;
+    this.lastSpeedScore = 0;
+  }
+
+  onInput(action) {
+    if (action === 'A' || action === 'UP') {
+      this.flap();
+    }
   }
 
   onTap() {
+    this.flap();
+  }
+
+  flap() {
+    if (this.gameOver) return;
     if (!this.started) {
       this.started = true;
       if (this.options?.sound) this.options.sound.play('start');
@@ -73,8 +85,9 @@ export class FlappyBirdGame extends GameEngine {
     this.pipes = this.pipes.filter(p => p.x > -this.pipeWidth);
 
     // Speed up over time
-    if (this.pipeInterval > 1.2 && this.score > 0 && this.score % 50 === 0) {
+    if (this.pipeInterval > 1.2 && this.score > 0 && this.score >= this.lastSpeedScore + 50) {
       this.pipeInterval -= 0.1;
+      this.lastSpeedScore = this.score;
     }
   }
 

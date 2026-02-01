@@ -156,18 +156,28 @@ export class PacManGame extends GameEngine {
     // How close to cell center on each axis
     const dxCenter = Math.abs(this.playerX - cellCenterX);
     const dyCenter = Math.abs(this.playerY - cellCenterY);
-    const snapThreshold = this.cellSize * 0.45;
+    const snapThreshold = this.cellSize * 0.5;
     const nearCenter = (dxCenter < snapThreshold) && (dyCenter < snapThreshold);
 
-    if (nearCenter) {
-      // Try the queued direction first (allows pre-turning)
+    // Check if current direction is blocked
+    const curBlocked = !this.canMove(cell.r + this.dir.y, cell.c + this.dir.x);
+
+    // Allow 180° reversal at any time (no need to be at cell center)
+    const isReverse = (this.nextDir.x === -this.dir.x && this.nextDir.y === -this.dir.y) &&
+                      (this.dir.x !== 0 || this.dir.y !== 0);
+    if (isReverse) {
+      this.dir = { ...this.nextDir };
+    }
+
+    // When near center OR stopped at a wall, try the queued direction
+    if (nearCenter || curBlocked) {
       const nextR = cell.r + this.nextDir.y;
       const nextC = cell.c + this.nextDir.x;
       if (this.canMove(nextR, nextC)) {
         this.dir = { ...this.nextDir };
-        // Snap to center on the axis perpendicular to movement (smooth cornering)
-        if (this.dir.x !== 0) this.playerY = cellCenterY;
-        if (this.dir.y !== 0) this.playerX = cellCenterX;
+        // Snap to cell center so we start clean in the new direction
+        this.playerX = cellCenterX;
+        this.playerY = cellCenterY;
       }
     }
 
@@ -177,8 +187,8 @@ export class PacManGame extends GameEngine {
     if (this.canMove(tryR, tryC)) {
       this.playerX += this.dir.x * this.playerSpeed * dt;
       this.playerY += this.dir.y * this.playerSpeed * dt;
-    } else if (nearCenter) {
-      // Stop cleanly at cell center (no jitter)
+    } else {
+      // Stop cleanly at cell center (no jitter, no stuck in corners)
       this.playerX = cellCenterX;
       this.playerY = cellCenterY;
     }

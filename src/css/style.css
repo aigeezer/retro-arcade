@@ -260,47 +260,50 @@ html, body {
 /* ===== MOBILE CONTROLS ===== */
 .mobile-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 8px 16px;
+  padding: 12px 20px;
   background: rgba(0, 0, 0, 0.9);
   border-top: 1px solid rgba(0, 255, 65, 0.15);
   flex-shrink: 0;
-  min-height: 100px;
+  min-height: 140px;
+  gap: 40px;
 }
 
 .dpad {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 160px;
+  height: 160px;
 }
 
 .dpad-btn {
   position: absolute;
-  width: 34px;
-  height: 34px;
+  width: 54px;
+  height: 54px;
   background: rgba(0, 255, 65, 0.15);
-  border: 1px solid rgba(0, 255, 65, 0.4);
-  border-radius: 6px;
+  border: 2px solid rgba(0, 255, 65, 0.4);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--neon-green);
-  font-size: 14px;
+  font-size: 22px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  user-select: none;
 }
 
 .dpad-btn:active, .dpad-btn.pressed {
   background: rgba(0, 255, 65, 0.4);
-  box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.6);
+  transform: scale(1.05);
 }
 
-.dpad-up { top: 0; left: 33px; }
-.dpad-down { bottom: 0; left: 33px; }
-.dpad-left { top: 33px; left: 0; }
-.dpad-right { top: 33px; right: 0; }
+.dpad-up { top: 0; left: 53px; }
+.dpad-down { bottom: 0; left: 53px; }
+.dpad-left { top: 53px; left: 0; }
+.dpad-right { top: 53px; right: 0; }
 
 .action-buttons {
   display: flex;
@@ -309,8 +312,8 @@ html, body {
 }
 
 .action-btn {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   border: 2px solid;
   font-family: var(--font-retro);
@@ -397,6 +400,72 @@ html, body {
 .overlay-btn:hover, .overlay-btn:active {
   background: rgba(0, 255, 242, 0.2);
   box-shadow: 0 0 15px rgba(0, 255, 242, 0.4);
+}
+
+/* ===== HOW TO PLAY / INSTRUCTIONS OVERLAY ===== */
+.instructions-overlay {
+  background: rgba(0, 0, 0, 0.92);
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.instructions-content {
+  max-width: 360px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.instructions-title {
+  font-size: 16px;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 15px var(--neon-cyan), 0 0 30px var(--neon-cyan);
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.instructions-section {
+  width: 100%;
+  text-align: center;
+}
+
+.instructions-label {
+  font-size: 8px;
+  color: var(--neon-magenta);
+  text-shadow: 0 0 6px var(--neon-magenta);
+  margin-bottom: 6px;
+  letter-spacing: 2px;
+}
+
+.instructions-text {
+  font-size: 7px;
+  color: var(--neon-green);
+  line-height: 1.8;
+  opacity: 0.9;
+}
+
+.instructions-tip {
+  font-size: 6px;
+  color: var(--neon-yellow);
+  line-height: 1.8;
+  opacity: 0.8;
+}
+
+.instructions-start-btn {
+  margin-top: 10px;
+  font-size: 10px !important;
+  padding: 12px 32px !important;
+  border-color: var(--neon-green) !important;
+  color: var(--neon-green) !important;
+  text-shadow: 0 0 8px var(--neon-green) !important;
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+.instructions-start-btn:hover, .instructions-start-btn:active {
+  background: rgba(0, 255, 65, 0.25) !important;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.5) !important;
 }
 
 /* ===== ANIMATIONS ===== */

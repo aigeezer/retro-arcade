@@ -36,7 +36,7 @@ export const gameRegistry = [
     name: 'Snake',
     icon: '🐍',
     Game: SnakeGame,
-    controls: 'swipe',
+    controls: 'dpad',
     width: 400,
     height: 400,
   },

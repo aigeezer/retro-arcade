@@ -2,6 +2,7 @@ import './css/style.css';
 import { InputManager } from './engine/InputManager.js';
 import { sound } from './engine/SoundManager.js';
 import { gameRegistry } from './games/index.js';
+import { gameInstructions } from './games/instructions.js';
 
 const app = document.getElementById('app');
 const input = new InputManager();
@@ -98,6 +99,61 @@ function showMenu() {
   });
 }
 
+// ===== HOW TO PLAY OVERLAY =====
+function showInstructionsOverlay(gameDef, onStart) {
+  const info = gameInstructions[gameDef.id];
+  if (!info) {
+    // No instructions for this game — just start
+    onStart();
+    return;
+  }
+
+  const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const controlsText = isMobile ? info.controls.mobile : info.controls.desktop;
+
+  const container = document.getElementById('canvasContainer');
+  if (!container) { onStart(); return; }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay instructions-overlay';
+  overlay.id = 'instructionsOverlay';
+  overlay.innerHTML = `
+    <div class="instructions-content">
+      <div class="instructions-title">${info.title}</div>
+      <div class="instructions-section">
+        <div class="instructions-label">OBJECTIVE</div>
+        <div class="instructions-text">${info.objective}</div>
+      </div>
+      <div class="instructions-section">
+        <div class="instructions-label">CONTROLS</div>
+        <div class="instructions-text">${controlsText}</div>
+      </div>
+      <div class="instructions-section">
+        <div class="instructions-label">TIPS</div>
+        ${info.tips.map(t => `<div class="instructions-tip">• ${t}</div>`).join('')}
+      </div>
+      <button class="overlay-btn instructions-start-btn" id="instructionsStartBtn">▶ START GAME</button>
+    </div>
+  `;
+  container.appendChild(overlay);
+
+  const startBtn = document.getElementById('instructionsStartBtn');
+  const doStart = () => {
+    overlay.remove();
+    onStart();
+  };
+  startBtn.addEventListener('click', doStart);
+  // Also allow pressing Space/Enter to start
+  const keyHandler = (e) => {
+    if (e.code === 'Space' || e.code === 'Enter') {
+      e.preventDefault();
+      document.removeEventListener('keydown', keyHandler);
+      doStart();
+    }
+  };
+  document.addEventListener('keydown', keyHandler);
+}
+
 // ===== GAME SCREEN =====
 function launchGame(gameDef, index) {
   app.innerHTML = `
@@ -133,7 +189,8 @@ function launchGame(gameDef, index) {
   const mobileControls = document.getElementById('mobileControls');
 
   // If game specifies custom controls (tap-based etc), hide dpad
-  if (gameDef.controls === 'tap' || gameDef.controls === 'swipe' || gameDef.controls === 'custom') {
+  // But for 'swipe' games, still show dpad on mobile as a fallback
+  if (gameDef.controls === 'tap' || gameDef.controls === 'custom') {
     mobileControls.style.display = 'none';
   }
 
@@ -185,7 +242,7 @@ function launchGame(gameDef, index) {
   // Mobile controls
   input.bindMobileControls(mobileControls);
 
-  // Swipe support for swipe-based games
+  // Swipe support for swipe-based games (now also bind for dpad games that want swipe)
   if (gameDef.controls === 'swipe') {
     input.bindSwipe(canvas, (dir) => {
       game.onInput(dir);
@@ -218,9 +275,11 @@ function launchGame(gameDef, index) {
     if (game.cleanup) game.cleanup();
   };
 
-  // Start!
-  sound.play('start');
-  game.start();
+  // Show instructions overlay first, then start game
+  showInstructionsOverlay(gameDef, () => {
+    sound.play('start');
+    game.start();
+  });
 }
 
 function showGameOverOverlay(gameDef, game, score, index) {

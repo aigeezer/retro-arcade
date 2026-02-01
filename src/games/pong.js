@@ -14,7 +14,17 @@ export class PongGame extends GameEngine {
     // AI paddle (top)
     this.aiX = this.width / 2 - this.paddleW / 2;
     this.aiY = 25;
-    this.aiSpeed = 150;
+    this.aiSpeed = 100;
+
+    // AI difficulty tuning — nerfed to be fun and beatable
+    this.aiReactionDelay = 0;        // Time before AI starts reacting to new ball position
+    this.aiReactionTimer = 0;        // Current timer
+    this.aiTargetX = this.width / 2; // Where AI thinks the ball is (delayed/inaccurate)
+    this.aiErrorMargin = 30;         // Random offset so AI doesn't perfectly track
+    this.aiError = 0;                // Current error offset
+    this.aiUpdateTimer = 0;          // Timer for AI to re-evaluate target
+    this.aiUpdateInterval = 0.4;     // How often AI updates its target (seconds)
+    this.aiMoveChance = 0.7;         // Probability AI moves on any given update (70%)
 
     // Ball
     this.ballSize = 8;
@@ -36,9 +46,12 @@ export class PongGame extends GameEngine {
     this.ballX = this.width / 2;
     this.ballY = this.height / 2;
     const angle = (Math.random() * Math.PI / 3) - Math.PI / 6;
-    const speed = 200 + (this.level - 1) * 30;
+    const speed = 180 + (this.level - 1) * 15; // Slower base, gentler scaling
     this.ballVX = Math.sin(angle) * speed;
     this.ballVY = -Math.cos(angle) * speed;
+    // Reset AI tracking on new ball
+    this.aiTargetX = this.width / 2;
+    this.aiUpdateTimer = 0;
   }
 
   update(dt) {
@@ -53,12 +66,28 @@ export class PongGame extends GameEngine {
     }
     this.playerX = Math.max(0, Math.min(this.width - this.paddleW, this.playerX));
 
-    // AI movement
+    // AI movement — nerfed for fun gameplay
+    // AI only re-evaluates its target periodically, with error
+    this.aiUpdateTimer += dt;
+    if (this.aiUpdateTimer >= this.aiUpdateInterval) {
+      this.aiUpdateTimer = 0;
+      // Only update target if ball is moving toward AI (upward)
+      if (this.ballVY < 0) {
+        // Add random error so AI doesn't perfectly track
+        this.aiError = (Math.random() - 0.5) * this.aiErrorMargin * 2;
+        this.aiTargetX = this.ballX + this.aiError;
+      } else {
+        // Ball is moving away — AI drifts lazily toward center
+        this.aiTargetX = this.width / 2 + (Math.random() - 0.5) * 60;
+      }
+    }
+
+    // AI sometimes just doesn't move (simulates human hesitation)
     const aiCenter = this.aiX + this.paddleW / 2;
-    const aiTarget = this.ballX;
-    const aiDiff = aiTarget - aiCenter;
-    const currentAiSpeed = this.aiSpeed + (this.level - 1) * 20;
-    if (Math.abs(aiDiff) > 10) {
+    const aiDiff = this.aiTargetX - aiCenter;
+    const currentAiSpeed = this.aiSpeed + (this.level - 1) * 8; // Much slower scaling
+    // AI needs a bigger dead zone before it reacts
+    if (Math.abs(aiDiff) > 25 && Math.random() < this.aiMoveChance) {
       this.aiX += Math.sign(aiDiff) * currentAiSpeed * dt;
     }
     this.aiX = Math.max(0, Math.min(this.width - this.paddleW, this.aiX));

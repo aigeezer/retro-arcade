@@ -14,17 +14,17 @@ export class PongGame extends GameEngine {
     // AI paddle (top)
     this.aiX = this.width / 2 - this.paddleW / 2;
     this.aiY = 25;
-    this.aiSpeed = 100;
+    this.aiSpeed = 140;
 
-    // AI difficulty tuning — nerfed to be fun and beatable
+    // AI difficulty tuning — balanced for fun challenge
     this.aiReactionDelay = 0;        // Time before AI starts reacting to new ball position
     this.aiReactionTimer = 0;        // Current timer
     this.aiTargetX = this.width / 2; // Where AI thinks the ball is (delayed/inaccurate)
-    this.aiErrorMargin = 30;         // Random offset so AI doesn't perfectly track
+    this.aiErrorMargin = 20;         // Random offset so AI doesn't perfectly track
     this.aiError = 0;                // Current error offset
     this.aiUpdateTimer = 0;          // Timer for AI to re-evaluate target
-    this.aiUpdateInterval = 0.4;     // How often AI updates its target (seconds)
-    this.aiMoveChance = 0.7;         // Probability AI moves on any given update (70%)
+    this.aiUpdateInterval = 0.25;    // How often AI updates its target (seconds)
+    this.aiMoveChance = 0.82;        // Probability AI moves on any given update (82%)
 
     // Ball
     this.ballSize = 8;
@@ -85,9 +85,9 @@ export class PongGame extends GameEngine {
     // AI sometimes just doesn't move (simulates human hesitation)
     const aiCenter = this.aiX + this.paddleW / 2;
     const aiDiff = this.aiTargetX - aiCenter;
-    const currentAiSpeed = this.aiSpeed + (this.level - 1) * 8; // Much slower scaling
-    // AI needs a bigger dead zone before it reacts
-    if (Math.abs(aiDiff) > 25 && Math.random() < this.aiMoveChance) {
+    const currentAiSpeed = this.aiSpeed + (this.level - 1) * 12; // Moderate scaling
+    // Dead zone before AI reacts
+    if (Math.abs(aiDiff) > 18 && Math.random() < this.aiMoveChance) {
       this.aiX += Math.sign(aiDiff) * currentAiSpeed * dt;
     }
     this.aiX = Math.max(0, Math.min(this.width - this.paddleW, this.aiX));

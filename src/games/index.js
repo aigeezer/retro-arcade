@@ -83,7 +83,7 @@ export const gameRegistry = [
     Game: PacManGame,
     controls: 'dpad',
     width: 400,
-    height: 400,
+    height: 500,
   },
   {
     id: 'asteroids',

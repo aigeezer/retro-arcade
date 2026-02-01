@@ -43,7 +43,7 @@ export class PacManGame extends GameEngine {
     this.cols = 28;
     this.rows = 31;
     this.offsetX = Math.floor((this.width - this.cols * this.cellSize) / 2);
-    this.offsetY = Math.floor((this.height - this.rows * this.cellSize) / 2) + 10;
+    this.offsetY = Math.floor((this.height - this.rows * this.cellSize) / 2);
 
     this.dir = { x: 0, y: 0 };
     this.nextDir = { x: 0, y: 0 };

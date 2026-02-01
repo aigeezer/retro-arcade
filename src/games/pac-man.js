@@ -117,9 +117,14 @@ export class PacManGame extends GameEngine {
   }
 
   getCell(px, py) {
-    const c = Math.round((px - this.offsetX) / this.cellSize);
-    const r = Math.round((py - this.offsetY) / this.cellSize);
-    return { r, c };
+    // Use floor + 0.5 offset for proper rounding to nearest cell
+    const c = Math.floor((px - this.offsetX + this.cellSize / 2) / this.cellSize);
+    const r = Math.floor((py - this.offsetY + this.cellSize / 2) / this.cellSize);
+    // Clamp to valid range
+    return { 
+      r: Math.max(0, Math.min(this.rows - 1, r)), 
+      c: Math.max(0, Math.min(this.cols - 1, c)) 
+    };
   }
 
   canMove(r, c) {
@@ -148,49 +153,56 @@ export class PacManGame extends GameEngine {
     // Power pellet flash
     this.dotFlashTimer += dt;
 
-    // Grid-based movement with pre-queued turning (classic Pac-Man style)
-    const cell = this.getCell(this.playerX, this.playerY);
-    const cellCenterX = cell.c * this.cellSize + this.offsetX;
-    const cellCenterY = cell.r * this.cellSize + this.offsetY;
+    // Grid-based movement — track grid position explicitly
+    // Calculate which cell we're closest to
+    const gridX = (this.playerX - this.offsetX) / this.cellSize;
+    const gridY = (this.playerY - this.offsetY) / this.cellSize;
+    const cellC = Math.round(gridX);
+    const cellR = Math.round(gridY);
+    const cellCenterX = cellC * this.cellSize + this.offsetX;
+    const cellCenterY = cellR * this.cellSize + this.offsetY;
     
-    // How close to cell center on each axis
+    // How far from cell center (fractional)
     const dxCenter = Math.abs(this.playerX - cellCenterX);
     const dyCenter = Math.abs(this.playerY - cellCenterY);
-    const snapThreshold = this.cellSize * 0.5;
-    const nearCenter = (dxCenter < snapThreshold) && (dyCenter < snapThreshold);
+    const turnWindow = this.cellSize * 0.45;
+    const atCenter = (dxCenter <= turnWindow) && (dyCenter <= turnWindow);
 
-    // Check if current direction is blocked
-    const curBlocked = !this.canMove(cell.r + this.dir.y, cell.c + this.dir.x);
-
-    // Allow 180° reversal at any time (no need to be at cell center)
+    // Allow 180° reversal instantly, anywhere
     const isReverse = (this.nextDir.x === -this.dir.x && this.nextDir.y === -this.dir.y) &&
                       (this.dir.x !== 0 || this.dir.y !== 0);
     if (isReverse) {
       this.dir = { ...this.nextDir };
     }
 
-    // When near center OR stopped at a wall, try the queued direction
-    if (nearCenter || curBlocked) {
-      const nextR = cell.r + this.nextDir.y;
-      const nextC = cell.c + this.nextDir.x;
-      if (this.canMove(nextR, nextC)) {
+    // Try turning at intersections
+    if (atCenter) {
+      const wantR = cellR + this.nextDir.y;
+      const wantC = cellC + this.nextDir.x;
+      if (this.canMove(wantR, wantC)) {
         this.dir = { ...this.nextDir };
-        // Snap to cell center so we start clean in the new direction
+        // Snap to center for clean cornering
         this.playerX = cellCenterX;
         this.playerY = cellCenterY;
       }
     }
 
-    // Move player in current direction
-    const tryR = cell.r + this.dir.y;
-    const tryC = cell.c + this.dir.x;
-    if (this.canMove(tryR, tryC)) {
+    // Move in current direction
+    const aheadR = cellR + this.dir.y;
+    const aheadC = cellC + this.dir.x;
+    if (this.canMove(aheadR, aheadC)) {
       this.playerX += this.dir.x * this.playerSpeed * dt;
       this.playerY += this.dir.y * this.playerSpeed * dt;
     } else {
-      // Stop cleanly at cell center (no jitter, no stuck in corners)
+      // Hit a wall — snap to cell center and stop
+      // But also try the queued direction (escape from dead ends)
       this.playerX = cellCenterX;
       this.playerY = cellCenterY;
+      const wantR = cellR + this.nextDir.y;
+      const wantC = cellC + this.nextDir.x;
+      if (this.canMove(wantR, wantC)) {
+        this.dir = { ...this.nextDir };
+      }
     }
 
     // Tunnel wrapping

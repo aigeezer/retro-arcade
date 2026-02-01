@@ -83,13 +83,16 @@ export class PacManGame extends GameEngine {
   }
 
   spawnPlayer() {
-    // Pac-Man starts below the ghost house
-    this.playerCol = 13;
-    this.playerRow = 23;
-    this.playerX = this.playerCol * this.cellSize + this.offsetX;
-    this.playerY = this.playerRow * this.cellSize + this.offsetY;
+    // Pac-Man starts below the ghost house — pure grid position
+    this.gridCol = 13;
+    this.gridRow = 23;
+    this.moveProgress = 0; // 0 to 1, how far between current cell and next
     this.dir = { x: -1, y: 0 };
     this.nextDir = { x: -1, y: 0 };
+    this.moving = true;
+    // Pixel positions derived from grid (for rendering + collision)
+    this.playerX = this.gridCol * this.cellSize + this.offsetX;
+    this.playerY = this.gridRow * this.cellSize + this.offsetY;
   }
 
   spawnGhosts() {
@@ -153,76 +156,89 @@ export class PacManGame extends GameEngine {
     // Power pellet flash
     this.dotFlashTimer += dt;
 
-    // Grid-based movement — track grid position explicitly
-    // Calculate which cell we're closest to
-    const gridX = (this.playerX - this.offsetX) / this.cellSize;
-    const gridY = (this.playerY - this.offsetY) / this.cellSize;
-    const cellC = Math.round(gridX);
-    const cellR = Math.round(gridY);
-    const cellCenterX = cellC * this.cellSize + this.offsetX;
-    const cellCenterY = cellR * this.cellSize + this.offsetY;
-    
-    // How far from cell center (fractional)
-    const dxCenter = Math.abs(this.playerX - cellCenterX);
-    const dyCenter = Math.abs(this.playerY - cellCenterY);
-    const turnWindow = this.cellSize * 0.45;
-    const atCenter = (dxCenter <= turnWindow) && (dyCenter <= turnWindow);
+    // === PURE GRID-BASED MOVEMENT ===
+    // Pac-Man is always at a grid cell or moving between two cells.
+    // No floating-point position guessing — grid is the source of truth.
 
     // Allow 180° reversal instantly, anywhere
     const isReverse = (this.nextDir.x === -this.dir.x && this.nextDir.y === -this.dir.y) &&
                       (this.dir.x !== 0 || this.dir.y !== 0);
-    if (isReverse) {
+    if (isReverse && this.moving) {
+      // Reverse: swap target and origin
       this.dir = { ...this.nextDir };
+      this.moveProgress = 1 - this.moveProgress;
     }
 
-    // Try turning at intersections
-    if (atCenter) {
-      const wantR = cellR + this.nextDir.y;
-      const wantC = cellC + this.nextDir.x;
+    // Advance movement progress
+    const cellsPerSecond = this.playerSpeed / this.cellSize;
+    
+    if (this.moving) {
+      this.moveProgress += cellsPerSecond * dt;
+    }
+
+    // Arrived at next cell (or past it)
+    while (this.moveProgress >= 1) {
+      this.moveProgress -= 1;
+      // Move to the next cell
+      this.gridCol += this.dir.x;
+      this.gridRow += this.dir.y;
+
+      // Tunnel wrapping
+      if (this.gridCol < 0) this.gridCol = this.cols - 1;
+      if (this.gridCol >= this.cols) this.gridCol = 0;
+
+      // Try queued direction first (pre-turning at junctions)
+      const wantR = this.gridRow + this.nextDir.y;
+      const wantC = this.gridCol + this.nextDir.x;
       if (this.canMove(wantR, wantC)) {
         this.dir = { ...this.nextDir };
-        // Snap to center for clean cornering
-        this.playerX = cellCenterX;
-        this.playerY = cellCenterY;
+      }
+
+      // Check if we can continue in current direction
+      const aheadR = this.gridRow + this.dir.y;
+      const aheadC = this.gridCol + this.dir.x;
+      if (!this.canMove(aheadR, aheadC)) {
+        // Hit a wall — stop at this cell
+        this.moving = false;
+        this.moveProgress = 0;
+        break;
       }
     }
 
-    // Move in current direction
-    const aheadR = cellR + this.dir.y;
-    const aheadC = cellC + this.dir.x;
-    if (this.canMove(aheadR, aheadC)) {
-      this.playerX += this.dir.x * this.playerSpeed * dt;
-      this.playerY += this.dir.y * this.playerSpeed * dt;
+    // If stopped, keep trying the queued direction each frame
+    if (!this.moving) {
+      const wantR = this.gridRow + this.nextDir.y;
+      const wantC = this.gridCol + this.nextDir.x;
+      if (this.canMove(wantR, wantC)) {
+        this.dir = { ...this.nextDir };
+        this.moving = true;
+        this.moveProgress = 0;
+      }
+    }
+
+    // Calculate pixel position from grid + progress (for rendering)
+    const baseX = this.gridCol * this.cellSize + this.offsetX;
+    const baseY = this.gridRow * this.cellSize + this.offsetY;
+    if (this.moving) {
+      this.playerX = baseX + this.dir.x * this.moveProgress * this.cellSize;
+      this.playerY = baseY + this.dir.y * this.moveProgress * this.cellSize;
     } else {
-      // Hit a wall — snap to cell center and stop
-      // But also try the queued direction (escape from dead ends)
-      this.playerX = cellCenterX;
-      this.playerY = cellCenterY;
-      const wantR = cellR + this.nextDir.y;
-      const wantC = cellC + this.nextDir.x;
-      if (this.canMove(wantR, wantC)) {
-        this.dir = { ...this.nextDir };
-      }
+      this.playerX = baseX;
+      this.playerY = baseY;
     }
 
-    // Tunnel wrapping
-    if (this.playerX < -this.cellSize + this.offsetX) {
-      this.playerX = (this.cols - 1) * this.cellSize + this.offsetX;
-    } else if (this.playerX > (this.cols - 1) * this.cellSize + this.offsetX + this.cellSize) {
-      this.playerX = this.offsetX;
-    }
-
-    // Collect dots
-    const pCell = this.getCell(this.playerX, this.playerY);
-    if (pCell.r >= 0 && pCell.r < this.rows && pCell.c >= 0 && pCell.c < this.cols) {
-      const tile = this.maze[pCell.r][pCell.c];
+    // Collect dots (use grid position — always accurate)
+    const pR = this.gridRow;
+    const pC = this.gridCol;
+    if (pR >= 0 && pR < this.rows && pC >= 0 && pC < this.cols) {
+      const tile = this.maze[pR][pC];
       if (tile === 2) {
-        this.maze[pCell.r][pCell.c] = 0;
+        this.maze[pR][pC] = 0;
         if (this.options?.sound) this.options.sound.play('click');
         this.addScore(10);
         this.dotsEaten++;
       } else if (tile === 3) {
-        this.maze[pCell.r][pCell.c] = 0;
+        this.maze[pR][pC] = 0;
         if (this.options?.sound) this.options.sound.play('powerup');
         this.addScore(50);
         this.dotsEaten++;

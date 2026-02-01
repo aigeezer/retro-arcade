@@ -16,16 +16,16 @@ export class PacManGame extends GameEngine {
       '1211112112111111211211112121',
       '1211112112111111211211112121',
       '1222222112222112222112222221',
-      '1111112111110110111121111121',
-      '0000012111110110111121000000',
-      '0000012110000000011211000000',
-      '0000012110114411011211000000',
+      '1111112111110110111121111111',
+      '1111112111110110111121111111',
+      '1111112110000000011211111111',
+      '1111112110114411011211111111',
       '1111112110140041011211111111',
       '5000002000140041000200000005',
       '1111112110140041011211111111',
-      '0000012110144441011211000000',
-      '0000012110000000011211000000',
-      '0000012110111111011211000000',
+      '1111112110144441011211111111',
+      '1111112110000000011211111111',
+      '1111112110111111011211111111',
       '1111112110111111011211111111',
       '1222222222222112222222222221',
       '1211112111112112111121111121',
@@ -97,11 +97,12 @@ export class PacManGame extends GameEngine {
 
   spawnGhosts() {
     // Classic ghost colors and names: Blinky(red), Pinky(pink), Inky(cyan), Clyde(orange)
+    // Blinky starts outside the house, others inside with staggered release
     const ghostDefs = [
-      { color: '#FF0000', name: 'blinky', startCol: 13, startRow: 11, dir: { x: -1, y: 0 } },
-      { color: '#FFB8FF', name: 'pinky',  startCol: 13, startRow: 14, dir: { x: 0, y: -1 } },
-      { color: '#00FFFF', name: 'inky',   startCol: 11, startRow: 14, dir: { x: 0, y: 1 } },
-      { color: '#FFB852', name: 'clyde',  startCol: 15, startRow: 14, dir: { x: 0, y: -1 } },
+      { color: '#FF0000', name: 'blinky', startCol: 13, startRow: 11, dir: { x: -1, y: 0 }, inHouse: false, releaseDelay: 0 },
+      { color: '#FFB8FF', name: 'pinky',  startCol: 13, startRow: 14, dir: { x: 0, y: -1 }, inHouse: true, releaseDelay: 3 },
+      { color: '#00FFFF', name: 'inky',   startCol: 11, startRow: 14, dir: { x: 0, y: -1 }, inHouse: true, releaseDelay: 7 },
+      { color: '#FFB852', name: 'clyde',  startCol: 15, startRow: 14, dir: { x: 0, y: -1 }, inHouse: true, releaseDelay: 12 },
     ];
     this.ghosts = [];
     const numGhosts = Math.min(2 + this.level, 4);
@@ -115,6 +116,8 @@ export class PacManGame extends GameEngine {
         dir: { ...def.dir },
         changeTimer: 1 + Math.random() * 2,
         scatterMode: false,
+        inHouse: def.inHouse,
+        releaseTimer: def.releaseDelay - (this.level - 1) * 1.5, // Faster release on higher levels
       });
     }
   }
@@ -131,20 +134,21 @@ export class PacManGame extends GameEngine {
   }
 
   canMove(r, c) {
+    // Tunnel wrap only on the tunnel row (row 14)
     if (c < 0 || c >= this.cols) {
-      // Tunnel wrap
-      return true;
+      return r === 14;
     }
     if (r < 0 || r >= this.rows) return false;
     const tile = this.maze[r][c];
-    return tile !== 1;
+    return tile !== 1 && tile !== 4; // Player can't enter ghost house
   }
 
-  isWalkable(r, c) {
-    if (c < 0 || c >= this.cols) return true;
+  // Ghosts can walk through ghost house tiles (4) and empty tiles
+  ghostCanMove(r, c) {
+    if (c < 0 || c >= this.cols) return r === 14;
     if (r < 0 || r >= this.rows) return false;
     const tile = this.maze[r][c];
-    return tile !== 1 && tile !== 4;
+    return tile !== 1;
   }
 
   update(dt) {
@@ -267,6 +271,22 @@ export class PacManGame extends GameEngine {
     const gSpeed = this.ghostSpeed + (this.level - 1) * 5;
     const frightenedSpeed = gSpeed * 0.5;
     this.ghosts.forEach(g => {
+      // Ghost house release logic
+      if (g.inHouse) {
+        g.releaseTimer -= dt;
+        if (g.releaseTimer <= 0) {
+          // Release: move ghost to exit position (row 11, col 13 — just above house)
+          g.x = 13 * this.cellSize + this.offsetX;
+          g.y = 11 * this.cellSize + this.offsetY;
+          g.dir = { x: -1, y: 0 };
+          g.inHouse = false;
+        } else {
+          // Bounce up and down inside the house
+          g.y += Math.sin(Date.now() / 200) * 0.5;
+          return; // Don't do normal movement while in house
+        }
+      }
+
       const currentSpeed = this.powerMode ? frightenedSpeed : gSpeed;
       g.x += g.dir.x * currentSpeed * dt;
       g.y += g.dir.y * currentSpeed * dt;
@@ -281,7 +301,7 @@ export class PacManGame extends GameEngine {
       const gc = this.getCell(g.x, g.y);
       g.changeTimer -= dt;
 
-      const ahead = this.isWalkable(gc.r + g.dir.y, gc.c + g.dir.x);
+      const ahead = this.ghostCanMove(gc.r + g.dir.y, gc.c + g.dir.x);
       if (!ahead || g.changeTimer <= 0) {
         // Get available directions (excluding reverse unless stuck)
         const reverse = { x: -g.dir.x, y: -g.dir.y };
@@ -290,13 +310,13 @@ export class PacManGame extends GameEngine {
           { x: 0, y: 1 }, { x: 0, y: -1 }
         ].filter(d => {
           if (d.x === reverse.x && d.y === reverse.y) return false;
-          return this.isWalkable(gc.r + d.y, gc.c + d.x);
+          return this.ghostCanMove(gc.r + d.y, gc.c + d.x);
         });
 
         // If no non-reverse direction, allow reverse
         if (dirs.length === 0) {
           dirs = [{ x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }]
-            .filter(d => this.isWalkable(gc.r + d.y, gc.c + d.x));
+            .filter(d => this.ghostCanMove(gc.r + d.y, gc.c + d.x));
         }
 
         if (dirs.length > 0) {
@@ -305,13 +325,14 @@ export class PacManGame extends GameEngine {
             g.dir = dirs[Math.floor(Math.random() * dirs.length)];
           } else {
             // Chase: bias toward player
-            const pCell2 = this.getCell(this.playerX, this.playerY);
+            let targetR = this.gridRow;
+            let targetC = this.gridCol;
             let best = dirs[0];
             let bestDist = Infinity;
             for (const d of dirs) {
               const nr = gc.r + d.y;
               const nc = gc.c + d.x;
-              const dist = Math.abs(nr - pCell2.r) + Math.abs(nc - pCell2.c);
+              const dist = Math.abs(nr - targetR) + Math.abs(nc - targetC);
               if (dist < bestDist) {
                 bestDist = dist;
                 best = d;
@@ -332,10 +353,12 @@ export class PacManGame extends GameEngine {
       const dy = g.y - this.playerY;
       if (Math.sqrt(dx * dx + dy * dy) < this.cellSize * 0.9) {
         if (this.powerMode) {
-          // Eat ghost — send back to ghost house
+          // Eat ghost — send back to ghost house with release delay
           g.x = 13 * this.cellSize + this.offsetX;
           g.y = 14 * this.cellSize + this.offsetY;
           g.dir = { x: 0, y: -1 };
+          g.inHouse = true;
+          g.releaseTimer = 3; // Re-release after 3 seconds
           if (this.options?.sound) this.options.sound.play('score');
           this.addScore(200);
         } else {

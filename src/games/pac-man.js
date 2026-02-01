@@ -47,7 +47,7 @@ export class PacManGame extends GameEngine {
 
     this.dir = { x: 0, y: 0 };
     this.nextDir = { x: 0, y: 0 };
-    this.playerSpeed = 80;
+    this.playerSpeed = 100;
     this.mouthAngle = 0;
     this.mouthDir = 1;
 
@@ -148,33 +148,37 @@ export class PacManGame extends GameEngine {
     // Power pellet flash
     this.dotFlashTimer += dt;
 
-    // Snap player to grid for direction changes
+    // Grid-based movement with pre-queued turning (classic Pac-Man style)
     const cell = this.getCell(this.playerX, this.playerY);
-
-    // Align to cell center when close
     const cellCenterX = cell.c * this.cellSize + this.offsetX;
     const cellCenterY = cell.r * this.cellSize + this.offsetY;
-    const distToCenter = Math.abs(this.playerX - cellCenterX) + Math.abs(this.playerY - cellCenterY);
+    
+    // How close to cell center on each axis
+    const dxCenter = Math.abs(this.playerX - cellCenterX);
+    const dyCenter = Math.abs(this.playerY - cellCenterY);
+    const snapThreshold = this.cellSize * 0.45;
+    const nearCenter = (dxCenter < snapThreshold) && (dyCenter < snapThreshold);
 
-    if (distToCenter < 6) {
-      // At a cell center — try direction change
+    if (nearCenter) {
+      // Try the queued direction first (allows pre-turning)
       const nextR = cell.r + this.nextDir.y;
       const nextC = cell.c + this.nextDir.x;
       if (this.canMove(nextR, nextC)) {
         this.dir = { ...this.nextDir };
-        this.playerX = cellCenterX;
-        this.playerY = cellCenterY;
+        // Snap to center on the axis perpendicular to movement (smooth cornering)
+        if (this.dir.x !== 0) this.playerY = cellCenterY;
+        if (this.dir.y !== 0) this.playerX = cellCenterX;
       }
     }
 
-    // Move player
+    // Move player in current direction
     const tryR = cell.r + this.dir.y;
     const tryC = cell.c + this.dir.x;
     if (this.canMove(tryR, tryC)) {
       this.playerX += this.dir.x * this.playerSpeed * dt;
       this.playerY += this.dir.y * this.playerSpeed * dt;
-    } else {
-      // Snap to cell center when hitting a wall to prevent getting stuck
+    } else if (nearCenter) {
+      // Stop cleanly at cell center (no jitter)
       this.playerX = cellCenterX;
       this.playerY = cellCenterY;
     }
